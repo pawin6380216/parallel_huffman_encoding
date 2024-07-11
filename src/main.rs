@@ -1,6 +1,44 @@
 use rayon::prelude::*;
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap};
+use std::fs::File;
+use std::io::{prelude::*, BufReader};
+
+
+/* ————— Analysis tools ————— */
+
+// Return the number of words in a file
+fn count_words(file_path: &str) -> u32 {
+    let file = match File::open(file_path) {
+        Ok(file) => file,
+        Err(_) => {
+            eprintln!("Error encountered: file not found or could not be opened.");
+            return 0;
+        }
+    };
+
+    let file_reader = BufReader::new(file);
+
+    let word_count: u32 = file_reader
+        .lines() 
+        .par_bridge() 
+        .map(|line_result| {
+            let line = match line_result {
+                Ok(line) => line,
+                Err(_) => {
+                    eprintln!("Error encountered: error reading line.");
+                    return 0; 
+                }
+            };
+
+            line.split_whitespace()
+                .filter(|word| !word.is_empty())
+                .count() as u32
+        })
+        .sum();
+
+    word_count
+}
 
 #[derive(Debug, Eq, PartialEq)]
 struct Node {
@@ -12,7 +50,7 @@ struct Node {
 
 impl Ord for Node {
     fn cmp(&self, other: &Self) -> Ordering {
-        other.freq.cmp(&self.freq) // Reverse order for min-heap
+        other.freq.cmp(&self.freq) 
     }
 }
 
@@ -42,8 +80,11 @@ fn build_huffman_tree(freq_table: &HashMap<char, u32>) -> Option<Node> {
         .collect();
 
     while heap.len() > 1 {
-        let left = heap.pop().unwrap();
-        let right = heap.pop().unwrap();
+        let left = heap.pop()
+                            .unwrap();
+
+        let right = heap.pop()
+                            .unwrap();
 
         let merged = Node {
             freq: left.freq + right.freq,
@@ -88,14 +129,5 @@ fn huffman_encoding(data: &str) -> (HashMap<char, String>, String) {
 }
 
 fn main() {
-    let data = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
-        Duis efficitur a augue eget imperdiet. Duis sagittis elit eget eros egestas, vitae porttitor enim cursus.
-        Nam nulla velit, interdum quis purus et, faucibus commodo nisi. Nunc rhoncus nulla at commodo eleifend. 
-        Duis tempus ac odio vitae convallis. Praesent accumsan magna euismod diam tempor, a scelerisque neque sodales. 
-        Phasellus venenatis leo magna, at efficitur velit congue vel. Nulla aliquet nunc et tellus laoreet, vel eleifend est congue.";
     
-    let (codes, encoded) = huffman_encoding(data);
-
-    println!("codes: {:?}", codes);
-    println!("encoded: {}", encoded);
 }
