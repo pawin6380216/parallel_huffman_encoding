@@ -15,9 +15,9 @@ fn count_words(file_path: &str) -> u32 {
             eprintln!("Error encountered: file not found or could not be opened.");
             return 0;
         }
-    };
+    };    
 
-    let file_reader = BufReader::new(file);
+    let file_reader  = BufReader::new(file);
 
     let word_count: u32 = file_reader
         .lines() 
@@ -37,7 +37,7 @@ fn count_words(file_path: &str) -> u32 {
         })
         .sum();
 
-    word_count
+    return word_count;
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -65,6 +65,26 @@ fn generate_frequency_table(data: &str) -> HashMap<char, u32> {
     for ch in data.chars() {
         *freq_table.entry(ch).or_insert(0) += 1;
     }
+    freq_table
+}
+
+fn par_generate_frequency_table(data: &str) -> HashMap<char, u32> {
+    let freq_table = data
+        .par_chars()
+        .fold(HashMap::new, |mut table, letter| {
+            *table.entry(letter)
+                .or_insert(0) += 1;
+            table
+        })
+        .reduce(HashMap::new, |mut left_table, right_table| {
+            for (letter, letter_freq) in right_table {
+                *left_table.entry(letter)
+                    .or_insert(0) += letter_freq;
+            }
+
+            left_table
+        });
+
     freq_table
 }
 
@@ -129,5 +149,11 @@ fn huffman_encoding(data: &str) -> (HashMap<char, String>, String) {
 }
 
 fn main() {
+    let data = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+        Duis efficitur a augue eget imperdiet. Duis sagittis elit eget eros egestas, vitae porttitor enim cursus.
+        Nam nulla velit, interdum quis purus et, faucibus commodo nisi. Nunc rhoncus nulla at commodo eleifend. 
+        Duis tempus ac odio vitae convallis. Praesent accumsan magna euismod diam tempor, a scelerisque neque sodales. 
+        Phasellus venenatis leo magna, at efficitur velit congue vel. Nulla aliquet nunc et tellus laoreet, vel eleifend est congue.";
     
+    println!("{:?}", par_generate_frequency_table(data));
 }
