@@ -7,53 +7,14 @@ use std::path::Path;
 use std::sync::Mutex; 
 
 use crate::node::{Node, EncodedData};
-
-pub fn build_huffman_tree(freq_map: &HashMap<char, usize>) -> Node {
-    println!("Generating Huffman tree...");
-    
-    let mut heap: std::collections::BinaryHeap<Node> = freq_map
-        .par_iter()
-        .map(|(&char, &freq)| Node::new_leaf(freq, char))
-        .collect();
-
-    // Build Huffman tree from frequency map
-    while (heap.len() > 1) {
-        let left = heap.pop().unwrap();
-        let right = heap.pop().unwrap();
-        let merged = Node::new_internal(left.freq + right.freq, left, right);
-
-        heap.push(merged);
-    }
-
-    println!("Huffman tree built successfully.");
-
-    heap.pop().unwrap()
-}
-
-// Recursively generates Huffman codes from the Huffman tree nodes.
-pub fn generate_codes(node: &Node, prefix: String, codes: &Mutex<HashMap<char, String>>) {
-    if let Some(char) = node.char {
-        codes.lock()
-            .unwrap()
-            .insert(char, prefix.clone()); // Insert character and its Huffman code into the HashMap
-
-    } else {
-        // Traverse left child with '0' prefix
-        if let Some(ref left) = node.left {
-            generate_codes(left, format!("{}0", prefix), codes); 
-        }
-        // Traverse right child with '1' prefix
-        if let Some(ref right) = node.right {
-            generate_codes(right, format!("{}1", prefix), codes); 
-        }
-    }
-}
+use crate::helpers::{build_huffman_tree, generate_codes, decode_text};
 
 // Writes encoded data to a file using JSON serialization.
 fn write_encoded_file(output_path: &Path, encoded_data: &EncodedData) -> io::Result<()> {
     println!("Writing encoded data to file...");
 
     let file = File::create(output_path)?;
+    
     // Serialize encoded_data to JSON and write to file
     serde_json::to_writer(file, encoded_data)?; 
 
@@ -132,4 +93,43 @@ pub fn encode_text(text: &str, codes: &HashMap<char, String>) -> String {
 
     println!("Text encoded successfully.");
     encoded_text
+}
+
+// Reads encoded data from a file using JSON deserialization.
+fn read_encoded_file(input_path: &Path) -> io::Result<EncodedData> {
+    println!("Reading encoded data from file...");
+
+    let file = File::open(input_path)?;
+    let encoded_data: EncodedData = serde_json::from_reader(file)?; 
+
+    println!("Encoded data read from file successfully.");
+    Ok(encoded_data)
+}
+
+// Decompresses a file that was previously compressed using Huffman coding.
+pub fn decompress_file(input_path: &Path) -> io::Result<()> {
+    println!("Starting decompression...");
+
+    let encoded_data = read_encoded_file(input_path)?;
+
+    // Decode text using Huffman codes
+    println!("Decoding text using Huffman codes...");
+    let decoded_text = decode_text(&encoded_data.encoded_text, &encoded_data.codes);
+
+    // Generate output file path
+    let output_path = input_path.with_file_name(format!(
+        "{}_decompressed.txt",
+        input_path.file_stem()
+                .unwrap()
+                .to_string_lossy()
+    ));
+
+    // Write decoded text to output file
+    println!("Writing decoded text to output file: {:?}", output_path);
+
+    let mut file = File::create(output_path)?;
+    file.write_all(decoded_text.as_bytes())?;
+
+    println!("Decompression completed successfully.");
+    Ok(())
 }
