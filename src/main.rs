@@ -4,6 +4,11 @@ use std::collections::{BinaryHeap, HashMap};
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 
+mod huffman_model;
+mod node;
+
+use crate::huffman_model::{compress_file};
+use std::path::Path;
 
 /* ————— Analysis tools ————— */
 
@@ -149,11 +154,15 @@ fn huffman_encoding(data: &str) -> (HashMap<char, String>, String) {
 }
 
 fn main() {
-    let data = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
-        Duis efficitur a augue eget imperdiet. Duis sagittis elit eget eros egestas, vitae porttitor enim cursus.
-        Nam nulla velit, interdum quis purus et, faucibus commodo nisi. Nunc rhoncus nulla at commodo eleifend. 
-        Duis tempus ac odio vitae convallis. Praesent accumsan magna euismod diam tempor, a scelerisque neque sodales. 
-        Phasellus venenatis leo magna, at efficitur velit congue vel. Nulla aliquet nunc et tellus laoreet, vel eleifend est congue.";
-    
-    println!("{:?}", par_generate_frequency_table(data));
+    let input_path = Path::new("test_data/Large/100mb-examplefile-com.txt");
+    let num_threads = 4;
+
+    // Configure Rayon's thread pool builder
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(num_threads)
+        .build_global()
+        .expect("Failed to build thread pool");
+
+    huffman_model::compress_file(&input_path);
+    println!("File compressed successfully.");
 }

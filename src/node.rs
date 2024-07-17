@@ -1,4 +1,5 @@
 use std::collections::HashMap; 
+use serde::{Deserialize, Serialize}; // For serialization
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Node {
@@ -28,6 +29,14 @@ impl Node {
             right: Some(Box::new(right)),
         }
     }
+}
+
+// Mapping of characters to Huffman codes
+// Encoded text using Huffman codes
+#[derive(Serialize, Deserialize)]
+pub struct EncodedData {
+    pub codes: HashMap<char, String>, 
+    pub encoded_text: String,        
 }
 
 impl Ord for Node {

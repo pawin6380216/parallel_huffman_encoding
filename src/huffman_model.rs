@@ -6,6 +6,8 @@ use std::io::{self, BufReader, Read, Write};
 use std::path::Path; 
 use std::sync::Mutex; 
 
+use crate::node::{Node, EncodedData};
+
 pub fn build_huffman_tree(freq_map: &HashMap<char, usize>) -> Node {
     println!("Generating Huffman tree...");
     
@@ -28,14 +30,35 @@ pub fn build_huffman_tree(freq_map: &HashMap<char, usize>) -> Node {
     heap.pop().unwrap()
 }
 
-// Returns the output file path for a given input file path.
-pub fn get_output_file_path(input_path: &Path) -> Path {
-    let output_path = input_path.with_file_name(format!(
-        "{}_compressed.txt",
-        input_path.file_stem().unwrap().to_string_lossy()
-    ));
+// Recursively generates Huffman codes from the Huffman tree nodes.
+pub fn generate_codes(node: &Node, prefix: String, codes: &Mutex<HashMap<char, String>>) {
+    if let Some(char) = node.char {
+        codes.lock()
+            .unwrap()
+            .insert(char, prefix.clone()); // Insert character and its Huffman code into the HashMap
 
-    output_path
+    } else {
+        // Traverse left child with '0' prefix
+        if let Some(ref left) = node.left {
+            generate_codes(left, format!("{}0", prefix), codes); 
+        }
+        // Traverse right child with '1' prefix
+        if let Some(ref right) = node.right {
+            generate_codes(right, format!("{}1", prefix), codes); 
+        }
+    }
+}
+
+// Writes encoded data to a file using JSON serialization.
+fn write_encoded_file(output_path: &Path, encoded_data: &EncodedData) -> io::Result<()> {
+    println!("Writing encoded data to file...");
+
+    let file = File::create(output_path)?;
+    // Serialize encoded_data to JSON and write to file
+    serde_json::to_writer(file, encoded_data)?; 
+
+    println!("Encoded data written to file successfully.");
+    Ok(())
 }
 
 // Compresses the contents of a file.
@@ -85,7 +108,9 @@ pub fn compress_file(input_path: &Path) -> io::Result<()> {
     // Generate output file path
     let output_path = input_path.with_file_name(format!(
         "{}_compressed.txt",
-        input_path.file_stem().unwrap().to_string_lossy()
+        input_path.file_stem()
+                .unwrap()
+                .to_string_lossy()
     ));
 
     println!("Writing encoded data to output file: {:?}", output_path);
