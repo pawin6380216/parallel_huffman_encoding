@@ -7,7 +7,7 @@ use std::path::Path;
 use std::sync::Mutex; 
 
 use crate::node::{Node, EncodedData};
-use crate::helpers::{build_huffman_tree, generate_codes, decode_text};
+use crate::helpers::{build_huffman_tree, generate_codes, encode_text, decode_text};
 
 // Writes encoded data to a file using JSON serialization.
 fn write_encoded_file(output_path: &Path, encoded_data: &EncodedData) -> io::Result<()> {
@@ -35,7 +35,7 @@ pub fn compress_file(input_path: &Path) -> io::Result<()> {
     let freq_map: HashMap<char, usize> = text
         .par_chars() 
         .fold(HashMap::new, |mut acc, char| { 
-            *acc.entry(char).or_insert(0) += 1;
+            *acc.entry(char).or_insert(0) += 1; // Insert entry of 0 into HashMap or increment count
             acc
         })
         .reduce(|| HashMap::new(), |mut acc, map| { 
@@ -79,20 +79,6 @@ pub fn compress_file(input_path: &Path) -> io::Result<()> {
 
     println!("Compression completed successfully.");
     Ok(())
-}
-
-// Encodes input text.
-pub fn encode_text(text: &str, codes: &HashMap<char, String>) -> String {
-    println!("Encoding text...");
-
-    let encoded_text = text
-        .par_chars() 
-        .map(|char| codes.get(&char).unwrap().as_str())
-        .collect::<Vec<&str>>()
-        .join(""); 
-
-    println!("Text encoded successfully.");
-    encoded_text
 }
 
 // Reads encoded data from a file using JSON deserialization.

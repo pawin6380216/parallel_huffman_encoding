@@ -46,6 +46,21 @@ pub fn generate_codes(node: &Node, prefix: String, codes: &Mutex<HashMap<char, S
     }
 }
 
+// Encodes input text.
+pub fn encode_text(text: &str, codes: &HashMap<char, String>) -> String {
+    println!("Encoding text...");
+
+    let encoded_text = text
+        .par_chars() 
+        .map(|char| codes.get(&char).unwrap().as_str())
+        .collect::<Vec<&str>>()
+        .join(""); 
+
+    println!("Text encoded successfully.");
+
+    encoded_text
+}
+
 // Decodes Huffman encoded text using pre-generated Huffman codes.
 pub fn decode_text(encoded_text: &str, codes: &HashMap<char, String>) -> String {
     println!("Decoding text...");
@@ -68,6 +83,6 @@ pub fn decode_text(encoded_text: &str, codes: &HashMap<char, String>) -> String 
     }
 
     println!("Text decoded successfully.");
-    
+
     decoded_text
 }
