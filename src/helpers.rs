@@ -1,8 +1,10 @@
 use rayon::prelude::*; 
 use std::collections::HashMap; 
-use std::sync::Mutex; 
+use std::sync::Mutex;
+use std::collections::BinaryHeap;
 
 use crate::node::Node; // Import Node struct from models module
+
 
 // Builds the Huffman tree 
 pub fn build_huffman_tree(freq_map: &HashMap<char, usize>) -> Node {
@@ -29,10 +31,24 @@ pub fn build_huffman_tree(freq_map: &HashMap<char, usize>) -> Node {
 
 // Recursively generates Huffman codes from the Huffman tree nodes.
 pub fn generate_codes(node: &Node, prefix: String, codes: &Mutex<HashMap<char, String>>) {
+    // If the node is a leaf node, insert the character and its Huffman code into the HashMap
     if let Some(char) = node.char {
         codes.lock()
             .unwrap()
             .insert(char, prefix.clone()); // Insert character and its Huffman code into the HashMap
+
+    /*
+    Example:
+        (*)
+        /   \
+    (A)      (*)
+            /   \
+        (B)     (C)
+
+    'A' -> 0
+    'B' -> 10
+    'C' -> 11
+    */
 
     } else {
         // Traverse left child with '0' prefix
@@ -70,12 +86,17 @@ pub fn decode_text(encoded_text: &str, codes: &HashMap<char, String>) -> String 
         reverse_codes.insert(code.clone(), *char); 
     }
 
+    // Initialized to store the final decoded output.
     let mut decoded_text = String::new();
-    let mut current_code = String::new();
+    // Build the Huffman code as we iterate through the bits of encoded_text.
+    let mut current_code = String::new(); 
 
+    // Iterate through the bits of the encoded text
     for bit in encoded_text.chars() {
         current_code.push(bit); 
 
+        // If a match is found in the reverse_codes HashMap, 
+        // add the corresponding character to the decoded_text.
         if let Some(&char) = reverse_codes.get(&current_code) {
             decoded_text.push(char); 
             current_code.clear(); 

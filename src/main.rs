@@ -2,6 +2,7 @@ use rayon::prelude::*;
 use std::path::{Path, PathBuf};
 use std::fs::File;
 use std::env;
+use std::time::Instant;
 use std::io::{prelude::*, BufReader};
 
 mod huffman_model;
@@ -119,6 +120,9 @@ fn main() {
         .build_global()
         .expect("Failed to build thread pool");
 
+
+    let start_time = Instant::now();
+
     // Perform the operation based on the specified mode
     match mode.as_str() {
         "compress" => match huffman_model::compress_file(&input_path) {
@@ -131,4 +135,10 @@ fn main() {
         },
         _ => eprintln!("Error: Invalid mode: {}", mode),
     }
+
+    let end_time = Instant::now();
+
+    let elapsed_time = end_time.duration_since(start_time).as_micros();
+
+    println!("Elapsed time: {} microseconds", elapsed_time);
 }
