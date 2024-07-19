@@ -4,6 +4,7 @@ use std::fs::File;
 use std::env;
 use std::time::Instant;
 use std::io::{prelude::*, BufReader};
+use colored::Colorize;
 
 mod huffman_model;
 mod node;
@@ -140,5 +141,5 @@ fn main() {
 
     let elapsed_time = end_time.duration_since(start_time).as_micros();
 
-    println!("Elapsed time: {} microseconds", elapsed_time);
+    println!("\nElapsed time: {} microseconds", elapsed_time.to_string().yellow());
 }
