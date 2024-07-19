@@ -34,6 +34,7 @@
     |       ├── bible.txt
     |       └── world192.txt
     |
+    ├── Parallel Data Compression.pdf
     ├── Cargo.lock
     ├── Cargo.toml
     └── README.md
